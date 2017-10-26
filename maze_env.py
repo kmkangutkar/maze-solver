@@ -15,29 +15,72 @@ import numpy as np
 import time
 import sys
 import tkinter as tk
+import random
 
 BLOCK_SIZE = 40   # pixels
-ROWS = 12  # grid height
-COLS = 5  # grid width
+ACTION_SPACE = ['up', 'down', 'left', 'right']
+'''
+ROWS = 4  # grid height
+COLS = 4  # grid width
+'''
 
 class Maze(tk.Tk, object):
-    def __init__(self):
+    def __init__(self, filename='example_maze'):
         super(Maze, self).__init__()
-        self.action_space = ['u', 'd', 'l', 'r']
+
+        # constants
+        self.action_space = ACTION_SPACE
         self.n_actions = len(self.action_space)
-        self.title('maze')
-        self.rows = ROWS
-        self.cols = COLS
         self.block_size = BLOCK_SIZE
+        #self.title('maze') # rename later as dense or sparse with loops
+
+        self.rows = None
+        self.cols = None
+        self._read_maze(filename)
+
         self.height = self.rows * self.block_size
         self.width = self.cols * self.block_size
         self.geometry(str(self.width) + 'x' + str(self.height))
-        #self.geometry('{}x{}'.format(self.width, self.height))
+
+        self.canvas = None
+        self.pits = []
+        self.open_blocks = []
         self._build_maze()
+
+        self.goal = self._accept_goal()
+        self.start = None
+        '''
+        self.goal = None
+        self._accept_goal()
+
+        self._rl_learn() 
+
+        self.start = None
+        self._accept_start()
+        '''
+       
+
+    def _read_maze(self, filename):
+        with open(filename) as f:
+            self.rows, self.cols = [int(x) for x in f.readline().strip().split()]
+            self.maze_lines = [line.strip().split() for line in f.readlines()]
+        print(self.rows, self.cols)
+
+
+    def _populate_blocks(self, lines):
+        #self.pits = [[self.create_object(elem, col, row) for col, elem in enumerate(line)] for row, line in enumerate(lines)]
+        for row, line in enumerate(lines):
+            for col, elem in enumerate(line):
+                if elem == 'P':
+                    created_object = self.create_object(elem, col, row)
+                    self.pits.append(created_object)
+                    print('pit:', col, row)
+                else:
+                    self.open_blocks.append((col, row))
+
 
     def _build_maze(self):
         self.canvas = tk.Canvas(self, bg='white', height=self.height, width=self.width)
-        #self.canvas = tk.Canvas(self, bg='white', height=10, width=100)
 
         # create vertical lines
         for c in range(self.cols):
@@ -48,75 +91,72 @@ class Maze(tk.Tk, object):
             x0, y0, x1, y1 = 0, r * self.block_size, self.width, r * self.block_size
             self.canvas.create_line(x0, y0, x1, y1)
 
-        # create origin
-        origin = np.array([self.block_size // 2, self.block_size // 2])
-
-        # pit
-        pit1_center = origin + np.array([self.block_size * 2, self.block_size])
-        self.pit1 = self.canvas.create_rectangle(
-            pit1_center[0] - (self.block_size // 2), pit1_center[1] - (self.block_size // 2),
-            pit1_center[0] + (self.block_size // 2), pit1_center[1] + (self.block_size // 2),
-            fill='black')
-        # pit
-        pit2_center = origin + np.array([self.block_size, self.block_size * 2])
-        self.pit2 = self.canvas.create_rectangle(
-            pit2_center[0] - (self.block_size // 2), pit2_center[1] - (self.block_size // 2),
-            pit2_center[0] + (self.block_size // 2), pit2_center[1] + (self.block_size // 2),
-            fill='black')
-
-        # create oval
-        oval_center = origin + self.block_size * 2
-        self.oval = self.canvas.create_oval(
-            oval_center[0] - (self.block_size // 2), oval_center[1] - (self.block_size // 2),
-            oval_center[0] + (self.block_size // 2), oval_center[1] + (self.block_size // 2),
-            fill='yellow')
-
-        # create red rect
-        self.rect = self.canvas.create_rectangle(
-            origin[0] - (self.block_size // 2), origin[1] - (self.block_size // 2),
-            origin[0] + (self.block_size // 2), origin[1] + (self.block_size // 2),
-            fill='red')
+        self._populate_blocks(self.maze_lines)
 
         # pack all
         self.canvas.pack()
 
+    def _accept_goal(self, filename='goal_coordinates'):
+        with open(filename) as f:
+            row, col = np.array([int(x) for x in f.readline().strip().split()])
+        goal = self.create_object('G', col, row)
+        return goal
+
+    def _accept_start(self, filename='start_coordinates'):
+        with open(filename) as f:
+            row, col = np.array([int(x) for x in f.readline()])
+        start = self.create_object('S', col, row)
+        return start
+
     def reset(self):
         self.update()
         time.sleep(0.1)
-        self.canvas.delete(self.rect)
-        origin = np.array([(self.block_size // 2), (self.block_size // 2)])
-        self.rect = self.canvas.create_rectangle(
-            origin[0] - (self.block_size // 2), origin[1] - (self.block_size // 2),
-            origin[0] + (self.block_size // 2), origin[1] + (self.block_size // 2),
-            fill='red')
+        self.canvas.delete(self.start)
+
+        #random start state
+        '''
+        created_object = None
+        new_start_coords = random.choice(self.open_blocks)
+        print(new_start_coords)
+        center = self.block_size * np.array(new_start_coords)
+        created_object = self.create_object('S', *center)
+        '''
+
+        #fixed start state
+        center = self.block_size * np.array([0, 0])
+        created_object = self.create_object('S', *center)
+        self.start = created_object
+
         # return observation
-        return self.canvas.coords(self.rect)
+        #print(x, y)
+        return self.canvas.coords(self.start)
 
     def step(self, action):
-        s = self.canvas.coords(self.rect)
+        s = self.canvas.coords(self.start)
+        x, y = s[:2]
         base_action = np.array([0, 0])
         if action == 0:   # up
-            if s[1] > self.block_size:
+            if y > 0:
                 base_action[1] -= self.block_size
         elif action == 1:   # down
-            if s[1] < (self.height - 1) * self.block_size:
+            if y < (self.rows - 1) * self.block_size:
                 base_action[1] += self.block_size
         elif action == 2:   # right
-            if s[0] < (self.width - 1) * self.block_size:
+            if x < (self.cols - 1) * self.block_size:
                 base_action[0] += self.block_size
         elif action == 3:   # left
-            if s[0] > self.block_size:
+            if x > 0:
                 base_action[0] -= self.block_size
 
-        self.canvas.move(self.rect, base_action[0], base_action[1])  # move agent
+        self.canvas.move(self.start, base_action[0], base_action[1])  # move agent
 
-        s_ = self.canvas.coords(self.rect)  # next state
+        s_ = self.canvas.coords(self.start)  # next state
 
         # reward function
-        if s_ == self.canvas.coords(self.oval):
+        if s_ == self.canvas.coords(self.goal):
             reward = 1
             done = True
-        elif s_ in [self.canvas.coords(self.pit1), self.canvas.coords(self.pit2)]:
+        elif s_ in [self.canvas.coords(p) for p in self.pits]:
             reward = -1
             done = True
         else:
@@ -129,12 +169,29 @@ class Maze(tk.Tk, object):
         time.sleep(0.1)
         self.update()
 
+    def create_object(self, object_label, col, row):
+        creation_functions = {
+            'P':self.canvas.create_rectangle,
+            'S':self.canvas.create_oval,
+            'G':self.canvas.create_oval,
+        }
+        colors = {
+            'P':'black',
+            'S':'red',
+            'G':'green',
+        }
+
+        object_center = self.block_size * np.array([col, row])
+        other_corner = object_center + self.block_size * np.array([1, 1])
+        created_object = creation_functions[object_label](*object_center, *other_corner, fill=colors[object_label])
+
+        return created_object
 
 def update():
     for t in range(10):
         s = maze.reset()
         while True:
-            maze.render()
+            #maze.render()
             a = 1
             s, r, done = maze.step(a)
             if done:
