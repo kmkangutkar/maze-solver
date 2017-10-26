@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 
 class QLearningTable:
-    def __init__(self, actions, learning_rate=0.01, discount_factor=0.5, e_greedy=0.9):
+    def __init__(self, actions, learning_rate=0.01, discount_factor=0.9, e_greedy=0.9):
         self.actions = actions
         self.learning_rate = learning_rate
         self.gamma = discount_factor
