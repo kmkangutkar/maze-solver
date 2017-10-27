@@ -77,10 +77,10 @@ def update(maze, rl, n_iterations):
 
     if USE_GUI:
         maze.destroy()
-        with open('gui', 'w') as f:
+        with open('tmp/gui', 'w') as f:
             print(rl.q_table, file=f)
     else:
-        with open('no_gui', 'w') as f:
+        with open('tmp/no_gui', 'w') as f:
             print(rl.q_table, file=f)
 
 
