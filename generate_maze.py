@@ -77,14 +77,19 @@ def print_maze(maze):
     OPEN = '.'#0
     PIT = '#'#1
     n_rows, n_cols = maze.shape
-    for r in range(n_rows):
-        for c in range(n_cols):
-            if maze[r][c] > 0:
-                symbol = OPEN
-            else:
-                symbol = PIT
-            print(symbol, end='')
-        print()
+    with open('tmp/example_maze', 'w') as f:
+        print(n_rows, n_cols)
+        print(n_rows, n_cols, file=f)
+        for r in range(n_rows):
+            for c in range(n_cols):
+                if maze[r][c] > 0:
+                    symbol = OPEN
+                else:
+                    symbol = PIT
+                print(symbol, end='')
+                print(symbol, end='', file=f)
+            print()
+            print(file=f)
 
 '''
 # The following is an attempt to reduce the width of all paths in the maze to 1.
@@ -154,6 +159,22 @@ def main():
             builder_index += 1
 
     print_maze(maze)
+
+    start_position = (random.randint(1, n_cols - 1), random.randint(1, n_rows - 1))
+    while maze[start_position] == 0:
+        start_position = (random.randint(1, n_cols - 1), random.randint(1, n_rows - 1))
+        
+    goal_position = (random.randint(1, n_cols - 1), random.randint(1, n_rows - 1))
+    while maze[goal_position] == 0 or goal_position == start_position:
+        goal_position = (random.randint(1, n_cols - 1), random.randint(1, n_rows - 1))
+
+    print(goal_position)
+    with open('tmp/goal_coordinates', 'w') as f:
+        print(*goal_position, file=f)
+
+    print(start_position)
+    with open('tmp/start_coordinates', 'w') as f:
+        print(*start_position, file=f)
 
 if __name__ == '__main__':
         main()
