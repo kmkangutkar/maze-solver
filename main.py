@@ -6,6 +6,7 @@ All other states:       ground      [reward = 0].
 """
 
 USE_GUI = False
+USE_RENDER = False
 
 from maze_env import Maze, MazeWithoutGui
 from rl_brain import QLearningTable
@@ -13,7 +14,7 @@ import time
 
 def main():
     # take constants as input
-    n_iterations = 100   
+    n_iterations = 1000 
 
     # create the maze (create canvas and accept goal state)
     if USE_GUI:
@@ -31,6 +32,7 @@ def main():
         update(maze, rl, n_iterations)
     
 def update(maze, rl, n_iterations):
+    successful_iterations = []
     for iteration in range(n_iterations):
         # initial observation
         observation = maze.reset()
@@ -38,8 +40,9 @@ def update(maze, rl, n_iterations):
         done = False
         step_count = 0
         while not done:
-            # fresh maze
-            #maze.render()
+            if USE_GUI and USE_RENDER:
+                # fresh maze
+                maze.render()
             # rl choose action based on observation
             action = rl.choose_action(str(observation))
 
@@ -52,11 +55,25 @@ def update(maze, rl, n_iterations):
             # swap observation
             observation = observation_new
             step_count += 1
-            print('\r', step_count, observation, end='')
+            #print('\r', step_count, observation, end='')
+#       if reward == 1:
+ #           print(iteration, '\tsteps:\t', step_count)
+       
         if reward == 1:
-            print(iteration, '\tsteps:\t', step_count)
+            result = '#'
+            successful_iterations.append((iteration, step_count)) 
+        else:
+            result = ''
+#        print(iteration, step_count, result, sep='\t')
+        print('\r', iteration, len(successful_iterations), end='')
     # end of game
     #print('game over')
+    print('SI', successful_iterations, sep='\n')
+    with open('successes', 'w') as f:
+        for s in successful_iterations:
+            print(*s, file=f)
+    print(min([x[1] for x in successful_iterations]))
+    
 
     if USE_GUI:
         maze.destroy()

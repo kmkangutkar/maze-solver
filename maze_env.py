@@ -19,13 +19,18 @@ import random
 
 BLOCK_SIZE = 40   # pixels
 ACTION_SPACE = ['up', 'down', 'left', 'right']
+FIXED_START = (0, 0)
+FIXED_GOAL = (19, 0)
+MOVEMENT_COST = -0.04
+PIT_COST = -100
+MAZE_FILE = 'example_maze2'
 '''
 ROWS = 4  # grid height
 COLS = 4  # grid width
 '''
 
 class MazeWithoutGui():
-    def __init__(self, filename='example_maze'):
+    def __init__(self, filename=MAZE_FILE):
         self.action_space = ACTION_SPACE
         self.n_actions = len(self.action_space)
 
@@ -43,13 +48,15 @@ class MazeWithoutGui():
     def _read_maze(self, filename):
         with open(filename) as f:
             self.rows, self.cols = [int(x) for x in f.readline().strip().split()]
-            self.maze_lines = [line.strip().split() for line in f.readlines()]
+            self.maze_lines = [line.strip() for line in f.readlines()]
         print(self.rows, self.cols)
 
     def _accept_goal(self, filename='goal_coordinates'):
         with open(filename) as f:
              col, row = [int(x) for x in f.readline().strip().split()]
-        goal = (col, row)
+        #goal = (col, row)
+        goal = FIXED_GOAL
+        print(goal)
         return goal 
 
     def _populate_blocks(self, lines):
@@ -68,7 +75,7 @@ class MazeWithoutGui():
         #self.start = random.choice(self.open_blocks)
 
         #fixed start state
-        self.start = (0, 0)
+        self.start = FIXED_START
 
         return self.start
 
@@ -93,24 +100,24 @@ class MazeWithoutGui():
             reward = 1
             done = True
         elif new_state in self.pits:
-            reward = -1
+            reward = PIT_COST
             done = True
         else:
-            reward = 0
+            reward = MOVEMENT_COST
             done = False
 
         return new_state, reward, done
 
 
 class Maze(tk.Tk, object):
-    def __init__(self, filename='example_maze'):
+    def __init__(self, filename=MAZE_FILE):
         super(Maze, self).__init__()
 
         # constants
         self.action_space = ACTION_SPACE
         self.n_actions = len(self.action_space)
         self.block_size = BLOCK_SIZE
-        #self.title('maze') # rename later as dense or sparse with loops
+        self.title('maze') # rename later as dense or sparse with loops
 
         self.rows = None
         self.cols = None
@@ -138,7 +145,7 @@ class Maze(tk.Tk, object):
     def _read_maze(self, filename):
         with open(filename) as f:
             self.rows, self.cols = [int(x) for x in f.readline().strip().split()]
-            self.maze_lines = [line.strip().split() for line in f.readlines()]
+            self.maze_lines = [line.strip() for line in f.readlines()]
         print(self.rows, self.cols)
 
 
@@ -173,6 +180,7 @@ class Maze(tk.Tk, object):
     def _accept_goal(self, filename='goal_coordinates'):
         with open(filename) as f:
             col, row = np.array([int(x) for x in f.readline().strip().split()])
+            col, row = FIXED_GOAL
         goal = self.create_object('G', col, row)
         return goal
 
@@ -187,14 +195,13 @@ class Maze(tk.Tk, object):
         time.sleep(0.1)
         self.canvas.delete(self.start)
 
-        #random start state
         '''
+        #random start state
         start_position = random.choice(self.open_blocks)
-        print(start_col, start_row)
         '''
 
         #fixed start state
-        start_position = (0, 0)
+        start_position = FIXED_START
 
         top_left_corner = self.block_size * np.array(start_position)
         created_object = self.create_object('S', *top_left_corner)
@@ -229,10 +236,10 @@ class Maze(tk.Tk, object):
             reward = 1
             done = True
         elif s_ in [self.canvas.coords(p) for p in self.pits]:
-            reward = -1
+            reward = PIT_COST
             done = True
         else:
-            reward = 0
+            reward = MOVEMENT_COST
             done = False
 
         return s_, reward, done
