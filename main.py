@@ -69,7 +69,7 @@ def update(maze, rl, n_iterations):
     # end of game
     #print('game over')
     print('SI', successful_iterations, sep='\n')
-    with open('successes', 'w') as f:
+    with open('tmp/successes', 'w') as f:
         for s in successful_iterations:
             print(*s, file=f)
     print(min([x[1] for x in successful_iterations]))
