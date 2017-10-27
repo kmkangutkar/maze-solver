@@ -1,33 +1,10 @@
-"""
-Reinforcement learning maze example.
-
-Red rectangle:          explorer.
-Black rectangles:       pits       [reward = -1].
-Yellow bin circle:      paradise    [reward = +1].
-All other states:       ground      [reward = 0].
-
-This script is the environment part of this example. The RL is in RL_brain.py.
-
-View more on my tutorial page: https://morvanzhou.github.io/tutorials/
-"""
-
-from parameters import BLOCK_SIZE, START, GOAL, MOVEMENT_REWARD, GOAL_REWARD, PIT_REWARD, MAZE_FILE
+from parameters import BLOCK_SIZE, START, GOAL, MOVEMENT_REWARD, GOAL_REWARD, PIT_REWARD, MAZE_FILE, ACTION_SPACE
 
 import numpy as np
 import time
 import sys
 import tkinter as tk
 import random
-
-ACTION_SPACE = ['up', 'down', 'left', 'right']
-'''
-with open('tmp/start_coordinates') as f:
-    START = [int(x) for x in f.readline().strip().split()]
-print('Start:', START)
-with open('tmp/goal_coordinates') as f:
-    GOAL = [int(x) for x in f.readline().strip().split()]
-'''
-print('Goal:', GOAL)
 
 class MazeWithoutGui():
     def __init__(self, filename=MAZE_FILE):

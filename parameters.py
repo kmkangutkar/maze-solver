@@ -7,6 +7,7 @@ BLOCK_SIZE = 40 # pixels
 START = (0, 0)
 GOAL = (19, 0)
 MAZE_FILE = 'example_maze2' # 'tmp/example_maze'
+ACTION_SPACE = ['up', 'down', 'left', 'right']
 
 # learning
 LEARNING_RATE = 0.1
