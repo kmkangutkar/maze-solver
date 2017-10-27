@@ -1,0 +1,2 @@
+1) Create a class MazeUnified which enables/disables GUI with a flag
+2) Figure out why Maze (with GUI) only works if start is (0, 0)
