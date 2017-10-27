@@ -11,23 +11,23 @@ This script is the environment part of this example. The RL is in RL_brain.py.
 View more on my tutorial page: https://morvanzhou.github.io/tutorials/
 """
 
+from parameters import BLOCK_SIZE, START, GOAL, MOVEMENT_REWARD, GOAL_REWARD, PIT_REWARD, MAZE_FILE
+
 import numpy as np
 import time
 import sys
 import tkinter as tk
 import random
 
-BLOCK_SIZE = 40   # pixels
 ACTION_SPACE = ['up', 'down', 'left', 'right']
-FIXED_START = (0, 0)
-FIXED_GOAL = (19, 0)
-MOVEMENT_COST = -0.04
-PIT_COST = -100
-MAZE_FILE = 'example_maze2'
 '''
-ROWS = 4  # grid height
-COLS = 4  # grid width
+with open('tmp/start_coordinates') as f:
+    START = [int(x) for x in f.readline().strip().split()]
+print('Start:', START)
+with open('tmp/goal_coordinates') as f:
+    GOAL = [int(x) for x in f.readline().strip().split()]
 '''
+print('Goal:', GOAL)
 
 class MazeWithoutGui():
     def __init__(self, filename=MAZE_FILE):
@@ -42,22 +42,14 @@ class MazeWithoutGui():
         self.pits = []
         self.open_blocks = []
         self._populate_blocks(self.maze_lines) 
-        self.goal = self._accept_goal()
-        self.start = None
+        self.goal = GOAL
+        self.start = START
 
     def _read_maze(self, filename):
         with open(filename) as f:
             self.rows, self.cols = [int(x) for x in f.readline().strip().split()]
             self.maze_lines = [line.strip() for line in f.readlines()]
         print(self.rows, self.cols)
-
-    def _accept_goal(self, filename='goal_coordinates'):
-        with open(filename) as f:
-             col, row = [int(x) for x in f.readline().strip().split()]
-        #goal = (col, row)
-        goal = FIXED_GOAL
-        print(goal)
-        return goal 
 
     def _populate_blocks(self, lines):
         for row, line in enumerate(lines):
@@ -75,7 +67,7 @@ class MazeWithoutGui():
         #self.start = random.choice(self.open_blocks)
 
         #fixed start state
-        self.start = FIXED_START
+        self.start = START
 
         return self.start
 
@@ -91,21 +83,22 @@ class MazeWithoutGui():
         elif action == 3 and x > 0:   # left
             base_action[0] -= 1
 
-        self.start = tuple(base_action) 
-
-        new_state = self.start  # next state
+        new_state = tuple(base_action)
 
         # reward function
         if new_state == self.goal:
-            reward = 1
+            reward = GOAL_REWARD
             done = True
         elif new_state in self.pits:
-            reward = PIT_COST
+            reward = PIT_REWARD
             done = True
+            #done = False
+            #new_state = self.start # reset new_state to old state
         else:
-            reward = MOVEMENT_COST
+            reward = MOVEMENT_REWARD
             done = False
 
+        self.start = new_state
         return new_state, reward, done
 
 
@@ -132,15 +125,8 @@ class Maze(tk.Tk, object):
         self.open_blocks = []
         self._build_maze()
 
-        self.goal = self._accept_goal()
-        self.start = None
-        '''
-        self._rl_learn() 
-
-        self.start = None
-        self._accept_start()
-        '''
-       
+        self.goal = self.create_object('G', *GOAL)
+        self.start = self.create_object('S', *START)
 
     def _read_maze(self, filename):
         with open(filename) as f:
@@ -177,19 +163,6 @@ class Maze(tk.Tk, object):
         # pack all
         self.canvas.pack()
 
-    def _accept_goal(self, filename='goal_coordinates'):
-        with open(filename) as f:
-            col, row = np.array([int(x) for x in f.readline().strip().split()])
-            col, row = FIXED_GOAL
-        goal = self.create_object('G', col, row)
-        return goal
-
-    def _accept_start(self, filename='start_coordinates'):
-        with open(filename) as f:
-            row, col = np.array([int(x) for x in f.readline()])
-        start = self.create_object('S', col, row)
-        return start
-
     def reset(self):
         self.update()
         time.sleep(0.1)
@@ -201,11 +174,12 @@ class Maze(tk.Tk, object):
         '''
 
         #fixed start state
-        start_position = FIXED_START
+        start_position = START
 
         top_left_corner = self.block_size * np.array(start_position)
-        created_object = self.create_object('S', *top_left_corner)
-        self.start = created_object
+        #created_object = self.create_object('S', *top_left_corner)
+        self.start = self.create_object('S', *top_left_corner)
+        #self.start = created_object
 
         # return observation
         return start_position
@@ -227,22 +201,25 @@ class Maze(tk.Tk, object):
             if x > 0:
                 base_action[0] -= self.block_size
 
-        self.canvas.move(self.start, base_action[0], base_action[1])  # move agent
+        self.canvas.move(self.start, *base_action)  # move agent
 
-        s_ = self.canvas.coords(self.start)  # next state
+        new_state = self.canvas.coords(self.start)  # next state
 
         # reward function
-        if s_ == self.canvas.coords(self.goal):
-            reward = 1
+        if new_state == self.canvas.coords(self.goal):
+            reward = GOAL_REWARD
             done = True
-        elif s_ in [self.canvas.coords(p) for p in self.pits]:
-            reward = PIT_COST
+        elif new_state in [self.canvas.coords(p) for p in self.pits]:
+            reward = PIT_REWARD
             done = True
+            #done = False
+            #base_action = x, y # reset new_state to old state
         else:
-            reward = MOVEMENT_COST
+            reward = MOVEMENT_REWARD
             done = False
 
-        return s_, reward, done
+        #self.canvas.move(self.start, *base_action)  # move agent
+        return new_state, reward, done
 
     def render(self):
         time.sleep(0.1)

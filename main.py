@@ -5,8 +5,7 @@ Yellow bin circle:      goal        [reward = +1].
 All other states:       ground      [reward = 0].
 """
 
-USE_GUI = False
-USE_RENDER = False
+from parameters import USE_GUI, USE_RENDER
 
 from maze_env import Maze, MazeWithoutGui
 from rl_brain import QLearningTable
