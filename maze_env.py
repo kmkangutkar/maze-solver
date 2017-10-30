@@ -6,7 +6,7 @@ import sys
 import tkinter as tk
 import random
 
-class MazeWithoutGui():
+class Maze():
     def __init__(self, filename=MAZE_FILE):
         self.action_space = ACTION_SPACE
         self.n_actions = len(self.action_space)
@@ -16,11 +16,11 @@ class MazeWithoutGui():
         self.maze_lines = None
         self._read_maze(filename)
 
-        self.pits = []
-        self.open_blocks = []
+        self.pit_locations = []
+        self.open_locations = []
         self._populate_blocks(self.maze_lines) 
-        self.goal = GOAL
-        self.start = START
+        self.goal_coordinates = GOAL
+        self.start_coordinates = START
 
     def _read_maze(self, filename):
         with open(filename) as f:
@@ -33,23 +33,23 @@ class MazeWithoutGui():
             for col, elem in enumerate(line):
                 position = col, row
                 if elem == 'P':
-                    self.pits.append(position)
+                    self.pit_locations.append(position)
                 else:
-                    self.open_blocks.append(position)
-        print('pits:', self.pits)
-        print('open:', self.open_blocks)
+                    self.open_locations.append(position)
+        print('pit locations:', self.pit_locations)
+        print('open:', self.open_locations)
 
     def reset(self):
         #random start state
-        #self.start = random.choice(self.open_blocks)
+        #self.start_coordinates = random.choice(self.open_locations)
 
         #fixed start state
-        self.start = START
+        self.start_coordinates = START
 
-        return self.start
+        return self.start_coordinates
 
     def step(self, action):
-        x, y = self.start[:2]
+        x, y = self.start_coordinates
         base_action = [x, y]
         if action == 0 and y > 0:   # up
             base_action[1] -= 1
@@ -63,65 +63,46 @@ class MazeWithoutGui():
         new_state = tuple(base_action)
 
         # reward function
-        if new_state == self.goal:
+        if new_state == self.goal_coordinates:
             reward = GOAL_REWARD
             done = True
-        elif new_state in self.pits:
+        elif new_state in self.pit_locations:
             reward = PIT_REWARD
             done = True
             #done = False
-            #new_state = self.start # reset new_state to old state
+            #new_state = self.start_coordinates # reset new_state to old state
         else:
             reward = MOVEMENT_REWARD
             done = False
 
-        self.start = new_state
+        self.start_coordinates = new_state
         return new_state, reward, done
 
-
-class Maze(tk.Tk, object):
+class MazeWithGui(Maze, tk.Tk):
     def __init__(self, filename=MAZE_FILE):
-        super(Maze, self).__init__()
+        Maze.__init__(self)
+        tk.Tk.__init__(self)
 
         # constants
-        self.action_space = ACTION_SPACE
-        self.n_actions = len(self.action_space)
         self.block_size = BLOCK_SIZE
         self.title('maze') # rename later as dense or sparse with loops
-
-        self.rows = None
-        self.cols = None
-        self._read_maze(filename)
 
         self.height = self.rows * self.block_size
         self.width = self.cols * self.block_size
         self.geometry(str(self.width) + 'x' + str(self.height))
 
+
         self.canvas = None
-        self.pits = []
-        self.open_blocks = []
+        self.pit_objects = []
         self._build_maze()
 
-        self.goal = self.create_object('G', *GOAL)
-        self.start = self.create_object('S', *START)
+        self.goal_object = self.create_object('G', *GOAL)
+        self.start_object = self.create_object('S', *START)
 
-    def _read_maze(self, filename):
-        with open(filename) as f:
-            self.rows, self.cols = [int(x) for x in f.readline().strip().split()]
-            self.maze_lines = [line.strip() for line in f.readlines()]
-        print(self.rows, self.cols)
-
-
-    def _populate_blocks(self, lines):
-        #self.pits = [[self.create_object(elem, col, row) for col, elem in enumerate(line)] for row, line in enumerate(lines)]
-        for row, line in enumerate(lines):
-            for col, elem in enumerate(line):
-                if elem == 'P':
-                    created_object = self.create_object(elem, col, row)
-                    self.pits.append(created_object)
-                else:
-                    self.open_blocks.append((col, row))
-
+    def _create_pit_objects(self):
+        for location in self.pit_locations:
+            created_object = self.create_object('P', *location)
+            self.pit_objects.append(created_object)
 
     def _build_maze(self):
         self.canvas = tk.Canvas(self, bg='white', height=self.height, width=self.width)
@@ -135,7 +116,7 @@ class Maze(tk.Tk, object):
             x0, y0, x1, y1 = 0, r, 0, self.cols
             self.create_line(x0, y0, x1, y1)
 
-        self._populate_blocks(self.maze_lines)
+        self._create_pit_objects()
 
         # pack all
         self.canvas.pack()
@@ -143,26 +124,16 @@ class Maze(tk.Tk, object):
     def reset(self):
         self.update()
         time.sleep(0.1)
-        self.canvas.delete(self.start)
-
-        '''
-        #random start state
-        start_position = random.choice(self.open_blocks)
-        '''
-
-        #fixed start state
-        start_position = START
-
+        self.canvas.delete(self.start_object)
+        start_position = Maze.reset(self)
         top_left_corner = self.block_size * np.array(start_position)
-        #created_object = self.create_object('S', *top_left_corner)
-        self.start = self.create_object('S', *top_left_corner)
-        #self.start = created_object
+        self.start_object = self.create_object('S', *top_left_corner)
 
         # return observation
         return start_position
 
     def step(self, action):
-        s = self.canvas.coords(self.start)
+        s = self.canvas.coords(self.start_object)
         x, y = s[:2]
         base_action = np.array([0, 0])
         if action == 0:   # up
@@ -178,24 +149,30 @@ class Maze(tk.Tk, object):
             if x > 0:
                 base_action[0] -= self.block_size
 
-        self.canvas.move(self.start, *base_action)  # move agent
+        self.canvas.move(self.start_object, *base_action)  # move agent
 
-        new_state = self.canvas.coords(self.start)  # next state
+        new_state = self.canvas.coords(self.start_object)  # next state
 
         # reward function
-        if new_state == self.canvas.coords(self.goal):
+        if new_state == self.canvas.coords(self.goal_object):
             reward = GOAL_REWARD
             done = True
-        elif new_state in [self.canvas.coords(p) for p in self.pits]:
+        elif new_state in [self.canvas.coords(p) for p in self.pit_objects]:
             reward = PIT_REWARD
             done = True
             #done = False
             #base_action = x, y # reset new_state to old state
         else:
-            reward = MOVEMENT_REWARD
-            done = False
+           reward = MOVEMENT_REWARD
+           done = False
 
-        #self.canvas.move(self.start, *base_action)  # move agent
+        #self.canvas.move(self.start_object, *base_action)  # move agent
+
+        '''
+        new_state, reward, done = Maze.step(self, action)
+        base_action = self.block_size * np.array(new_state)
+        self.canvas.move(self.start_object, *base_action)  # move agent
+        '''
         return new_state, reward, done
 
     def render(self):

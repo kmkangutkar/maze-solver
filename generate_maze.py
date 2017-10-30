@@ -75,7 +75,7 @@ def generate_builders(n_rows, n_cols, packing_fraction=0.01, max_distance_ratio=
 
 def print_maze(maze):
     OPEN = '.'#0
-    PIT = '#'#1
+    PIT = 'P'#1
     n_rows, n_cols = maze.shape
     with open('tmp/example_maze', 'w') as f:
         print(n_rows, n_cols)

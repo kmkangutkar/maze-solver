@@ -5,34 +5,31 @@ Yellow bin circle:      goal        [reward = +1].
 All other states:       ground      [reward = 0].
 """
 
-from parameters import USE_GUI, USE_RENDER
+from parameters import USE_GUI, USE_RENDER, N_ITERATIONS
 
-from maze_env import Maze, MazeWithoutGui
+from maze_env import Maze, MazeWithGui
 from rl_brain import QLearningTable
 import time
 
 def main():
-    # take constants as input
-    n_iterations = 1000 
-
     # create the maze (create canvas and accept goal state)
     if USE_GUI:
-        maze = Maze()
+        maze = MazeWithGui()
     else:
-        maze = MazeWithoutGui()
+        maze = Maze()
 
     rl = QLearningTable(actions=list(range(maze.n_actions)))
 
     if USE_GUI:
-        maze.after(100, update, maze, rl, n_iterations)
+        maze.after(100, update, maze, rl, N_ITERATIONS)
         maze.mainloop()
     else:
         time.sleep(0.1)
-        update(maze, rl, n_iterations)
+        update(maze, rl, N_ITERATIONS)
     
-def update(maze, rl, n_iterations):
+def update(maze, rl, N_ITERATIONS):
     successful_iterations = []
-    for iteration in range(n_iterations):
+    for iteration in range(N_ITERATIONS):
         # initial observation
         observation = maze.reset()
 
