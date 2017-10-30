@@ -61,4 +61,4 @@ with open('tmp/sample_maze', 'w') as f:
 for ky in range(imgy):
     for kx in range(imgx):
         pixels[kx, ky] = color[maze[my * ky // imgy][mx * kx // imgx]]
-image.save("Maze_" + str(mx) + "x" + str(my) + ".png", "PNG")
+image.save("tmp/Maze_" + str(mx) + "x" + str(my) + ".png", "PNG")
