@@ -1,5 +1,4 @@
 1) Create a class MazeUnified which enables/disables GUI with a flag
 2) Figure out why Maze (with GUI) only works if start is (0, 0)
-3) Add N_COLS and N_ROWS in parameters
-4) Fix absence of horizontal lines
-5) Don't reset iteration agent hits a pit. It should get negative reward and continue from there.
+3) Fix absence of horizontal lines
+4) Don't reset iteration agent hits a pit. It should get negative reward and continue from there.
