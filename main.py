@@ -61,7 +61,7 @@ def update(maze, rl, N_ITERATIONS):
         else:
             result = ''
 #        print(iteration, step_count, result, sep='\t')
-        print('\r', iteration, len(successful_iterations), end='')
+        print('\r', iteration + 1, len(successful_iterations), end='')
     # end of game
     #print('game over')
     print('SI', successful_iterations, sep='\n')

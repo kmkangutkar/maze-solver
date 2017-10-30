@@ -68,9 +68,9 @@ class Maze():
             done = True
         elif new_state in self.pit_locations:
             reward = PIT_REWARD
-            done = True
-            #done = False
-            #new_state = self.start_coordinates # reset new_state to old state
+            #done = True
+            done = False
+            new_state = self.start_coordinates # reset new_state to old state
         else:
             reward = MOVEMENT_REWARD
             done = False
