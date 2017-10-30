@@ -1,7 +1,9 @@
+from itertools import combinations
+from parameters import N_COLS, N_ROWS
+
 import numpy as np
 import random
 import operator
-from itertools import combinations
 
 class Builder():
     actions = {
@@ -12,8 +14,8 @@ class Builder():
     }
     circular_directions = ('left', 'up', 'right', 'down')
 
-    def __init__(self, row, col, direction, max_distance, label):
-        self.position = (row, col)
+    def __init__(self, col, row, direction, max_distance, label):
+        self.position = (col, row)
         self.direction = direction
         self.max_distance = max_distance
         self.remaining_distance = random.randint(1, self.max_distance)
@@ -40,26 +42,26 @@ class Builder():
         self.turn_randomly()
         self.choose_distance_randomly()
 
-    def is_hit_wall(self, n_rows, n_cols):
+    def is_hit_wall(self, n_cols, n_rows):
         temp_position = self.check_move()
-        safe = 0 <= temp_position[0] < n_rows and 0 <= temp_position[1] < n_cols
+        safe = 0 <= temp_position[0] < n_cols and 0 <= temp_position[1] < n_rows
         hit_wall = not safe
         return hit_wall
 
 
-def read_dimensions_from_file(filename):
-    with open(filename) as f:
-        n_rows, n_cols = [int(x) for x in f.readline().strip().split()]
-    return n_rows, n_cols
+def read_dimensions():
+    n_cols = N_COLS
+    n_rows = N_ROWS
+    return n_cols, n_rows
 
-def generate_builders(n_rows, n_cols, packing_fraction=0.01, max_distance_ratio=0.5):
-    maze_area = n_rows * n_cols
-    builder_max_distance = int(max_distance_ratio * min(n_rows, n_cols))
+def generate_builders(n_cols, n_rows, packing_fraction=0.01, max_distance_ratio=0.5):
+    maze_area = n_cols * n_rows
+    builder_max_distance = int(max_distance_ratio * min(n_cols, n_rows))
     n_start_positions = max(1, int(packing_fraction * maze_area))
     start_positions = []
     builders = []
     while len(start_positions) < n_start_positions:
-        new_position = (random.randint(0, n_rows - 1), random.randint(0, n_cols - 1))
+        new_position = (random.randint(0, n_cols - 1), random.randint(0, n_rows - 1))
         if new_position in start_positions:
             continue
         start_positions.append(new_position)
@@ -76,13 +78,13 @@ def generate_builders(n_rows, n_cols, packing_fraction=0.01, max_distance_ratio=
 def print_maze(maze):
     OPEN = '.'#0
     PIT = 'P'#1
-    n_rows, n_cols = maze.shape
+    n_cols, n_rows = maze.shape
     with open('tmp/example_maze', 'w') as f:
-        print(n_rows, n_cols)
-        print(n_rows, n_cols, file=f)
+        print(n_cols, n_rows)
+        print(n_cols, n_rows, file=f)
         for r in range(n_rows):
             for c in range(n_cols):
-                if maze[r][c] > 0:
+                if maze[c][r] > 0:
                     symbol = OPEN
                 else:
                     symbol = PIT
@@ -103,7 +105,7 @@ def is_hit_other_path_extra(maze, b):
         new_position = tuple(map(operator.add, b.position, change))
         adjacent_squares.append(new_position)
 
-    safe = all(0 <= pos[0] < n_rows and 0 <= pos[1] < n_cols and maze[pos] in [0, b.id] for pos in adjacent_squares)
+    safe = all(0 <= pos[0] < n_cols and 0 <= pos[1] < n_rows and maze[pos] in [0, b.id] for pos in adjacent_squares)
     hit_other_path = not safe
     return hit_other_path
 '''
@@ -112,9 +114,10 @@ def is_hit_other_path(maze, b):
     safe = maze[b.position] in [0, b.id]
     hit_other_path = not safe
     return hit_other_path
+
 def main():
     '''
-    take input: rows, colums
+    take input: cols, rows
     make a list of the start positions for the builders
     for each start position:
         generate 1 to 4 builders starting at this position and going in different directions
@@ -130,9 +133,9 @@ def main():
     write maze to file while replacing 1 with Pit and 0 with Open
     '''
 
-    n_rows, n_cols = read_dimensions_from_file('dimensions')
-    maze = np.zeros((n_rows, n_cols), dtype=np.int8)
-    builders, start_positions = generate_builders(n_rows, n_cols)
+    n_cols, n_rows = read_dimensions()
+    maze = np.zeros((n_cols, n_rows), dtype=np.int8)
+    builders, start_positions = generate_builders(n_cols, n_rows)
     for index, pos in enumerate(start_positions):
         maze[pos] = index + 1
 
@@ -142,7 +145,7 @@ def main():
             b = builders[builder_index]
             if not b.remaining_distance:
                 b.start_new_path()
-            while b.is_hit_wall(n_rows, n_cols):
+            while b.is_hit_wall(n_cols, n_rows):
                 b.start_new_path()
             b.move()
             if len(start_positions) > 1:

@@ -3,7 +3,7 @@
 # FB - 20121214
 
 from PIL import Image
-from parameters import PIT_CHAR, OPEN_CHAR
+from parameters import PIT_CHAR, OPEN_CHAR, N_COLS, N_ROWS
 
 
 import random
@@ -11,7 +11,7 @@ import random
 imgx = 500; imgy = 500
 image = Image.new("RGB", (imgx, imgy))
 pixels = image.load()
-mx = 20; my = 20 # width and height of the maze
+mx = N_COLS; my = N_ROWS # width and height of the maze
 maze = [[0 for x in range(mx)] for y in range(my)]
 dx = [0, 1, 0, -1]; dy = [-1, 0, 1, 0] # 4 directions to move in the maze
 color = [(0,0, 0), (255, 255, 255)] # RGB colors of the maze
@@ -44,6 +44,7 @@ while len(stack) > 0:
 
 with open('tmp/sample_maze', 'w') as f:
     print(mx, my, file=f)
+    print(mx, my)
     for line in maze:
         for elem in line:
             if elem == 0:
@@ -51,7 +52,9 @@ with open('tmp/sample_maze', 'w') as f:
             elif elem == 1:
                 char = OPEN_CHAR
             print(char, file=f, end='')
+            print(char, end='')
         print(file=f)
+        print()
             
 
 # paint the maze

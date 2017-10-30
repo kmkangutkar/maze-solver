@@ -9,6 +9,8 @@ START_CHAR = 'S'
 GOAL_CHAR = 'G'
 
 # maze
+N_COLS = 10
+N_ROWS = 30
 START = (0, 0)
 GOAL = (4, 5)
 MAZE_CHOICES = ['tmp/example_maze', 'example_maze2', 'tmp/example_maze_not_working', 'tmp/sample_maze']
