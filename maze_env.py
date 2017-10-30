@@ -133,46 +133,15 @@ class MazeWithGui(Maze, tk.Tk):
         return start_position
 
     def step(self, action):
-        s = self.canvas.coords(self.start_object)
-        x, y = s[:2]
-        base_action = np.array([0, 0])
-        if action == 0:   # up
-            if y > 0:
-                base_action[1] -= self.block_size
-        elif action == 1:   # down
-            if y < (self.rows - 1) * self.block_size:
-                base_action[1] += self.block_size
-        elif action == 2:   # right
-            if x < (self.cols - 1) * self.block_size:
-                base_action[0] += self.block_size
-        elif action == 3:   # left
-            if x > 0:
-                base_action[0] -= self.block_size
+        x, y = self.canvas.coords(self.start_object)[:2]
 
-        self.canvas.move(self.start_object, *base_action)  # move agent
+        new_state, reward, done = Maze.step(self, action)
+        x_diff, y_diff = self.block_size * np.array(new_state) - np.array([x, y])
+
+        self.canvas.move(self.start_object, x_diff, y_diff)  # move agent
 
         new_state = self.canvas.coords(self.start_object)  # next state
 
-        # reward function
-        if new_state == self.canvas.coords(self.goal_object):
-            reward = GOAL_REWARD
-            done = True
-        elif new_state in [self.canvas.coords(p) for p in self.pit_objects]:
-            reward = PIT_REWARD
-            done = True
-            #done = False
-            #base_action = x, y # reset new_state to old state
-        else:
-           reward = MOVEMENT_REWARD
-           done = False
-
-        #self.canvas.move(self.start_object, *base_action)  # move agent
-
-        '''
-        new_state, reward, done = Maze.step(self, action)
-        base_action = self.block_size * np.array(new_state)
-        self.canvas.move(self.start_object, *base_action)  # move agent
-        '''
         return new_state, reward, done
 
     def render(self):
