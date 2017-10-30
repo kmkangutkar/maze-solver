@@ -11,8 +11,8 @@ class Maze():
         self.action_space = ACTION_SPACE
         self.n_actions = len(self.action_space)
 
-        self.rows = None
         self.cols = None
+        self.rows = None
         self.maze_lines = None
         self._read_maze(filename)
 
@@ -24,9 +24,9 @@ class Maze():
 
     def _read_maze(self, filename):
         with open(filename) as f:
-            self.rows, self.cols = [int(x) for x in f.readline().strip().split()]
+            self.cols, self.rows = [int(x) for x in f.readline().strip().split()]
             self.maze_lines = [line.strip() for line in f.readlines()]
-        print(self.rows, self.cols)
+        print(self.cols, self.rows)
 
     def _populate_blocks(self, lines):
         for row, line in enumerate(lines):
@@ -113,7 +113,7 @@ class MazeWithGui(Maze, tk.Tk):
             self.create_line(x0, y0, x1, y1)
         # create horizontal lines
         for r in range(self.rows):
-            x0, y0, x1, y1 = 0, r, 0, self.cols
+            x0, y0, x1, y1 = 0, r, self.cols, r
             self.create_line(x0, y0, x1, y1)
 
         self._create_pit_objects()
